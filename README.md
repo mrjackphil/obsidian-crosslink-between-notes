@@ -10,7 +10,7 @@ Tested on Obsidian 0.9.10
 ## How to install
 You can install the plugin via the Community Plugins tab within Obsidian. Just search for "Add links to current note." when it'll be available.
 ### Manual installation
-You can install the plugin manually by downloading the zip of the latest Github Release. Unzip the contents into your `<vault>/.obsidian/plugins/mrj-crosslink-between-notes` directory. [More info](https://forum.obsidian.md/t/plugins-mini-faq/7737).
+You can install the plugin manually by downloading files from [Latest Release](https://github.com/mrjackphil/obsidian-crosslink-between-notes/releases/latest). Unzip the contents into your `<vault>/.obsidian/plugins/mrj-crosslink-between-notes` directory. [More info](https://forum.obsidian.md/t/plugins-mini-faq/7737).
 ## Donation
 - [Patreon](https://patreon.com/mrjackphil)
 - [Paypal](https://www.paypal.com/paypalme/mrjackphil)
