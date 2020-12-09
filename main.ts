@@ -26,7 +26,7 @@ export default class MyPlugin extends Plugin {
 
 			let successed = [] as TFile[]
 
-			links.forEach(lnk => {
+			links.forEach( async (lnk) => {
 				const lnkName = lnk
 					.replace(/(\[\[|]])/g, '')
 					.replace(/\|.+/, '')
@@ -38,8 +38,10 @@ export default class MyPlugin extends Plugin {
 				)[0]
 
 				if (file) {
-					// @ts-ignore
-					this.app.vault.modify(file, file.cachedData + `\n[[${fileName}]]`)
+					const {vault} = this.app
+
+					const data = await vault.read(file)
+					await vault.modify(file, data + `\n[[${fileName}]]`)
 					successed.push(file)
 				}
 
