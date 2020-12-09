@@ -1,13 +1,8 @@
 import {
-	App,
-	EditableFileView,
-	MarkdownSourceView,
 	MarkdownView,
-	Modal,
 	Notice,
 	Plugin,
-	PluginSettingTab,
-	Setting, TFile
+	TFile
 } from 'obsidian';
 
 export default class MyPlugin extends Plugin {
@@ -26,18 +21,16 @@ export default class MyPlugin extends Plugin {
             const selectedRange = cm.getSelections().join('\n')
 			const line = selectedRange || cm.getLine(cursor.line)
 
-			const links = line.match(/\[\[.+?\]\]/gi)
+			const links = line.match(/\[\[.+?]]/gi)
 			const files = this.app.vault.getFiles()
-
-			console.log(links)
 
 			let successed = [] as TFile[]
 
 			links.forEach(lnk => {
 				const lnkName = lnk
-					.replace(/(\[\[|\]\])/g, '')
+					.replace(/(\[\[|]])/g, '')
 					.replace(/\|.+/, '')
-					.replace(/\#.+/, '')
+					.replace(/#.+/, '')
 
 				const file = files.filter(e =>  e.name === lnkName
 					|| e.path === lnkName
