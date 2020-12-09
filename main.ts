@@ -26,7 +26,7 @@ export default class MyPlugin extends Plugin {
             const links = line.match(/\[\[.+?]]/gi)
             const files = this.app.vault.getFiles()
 
-            let successed = [] as TFile[]
+            let succeed = [] as TFile[]
 
             links.forEach(async (lnk) => {
                 const lnkName = lnk
@@ -44,10 +44,10 @@ export default class MyPlugin extends Plugin {
 
                     const data = await vault.read(file)
                     await vault.modify(file, data + `\n[[${fileName}]]`)
-                    successed.push(file)
+                    succeed.push(file)
                 }
 
-                new Notice(`Add link [[${fileName}]] to ${successed.map(e => e.basename).join(',')}`)
+                new Notice(`Add link [[${fileName}]] to ${succeed.map(e => e.basename).join(',')}`)
             })
         }
 
