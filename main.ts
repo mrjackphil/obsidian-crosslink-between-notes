@@ -60,6 +60,7 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
 
                 const mdName = lnk.match(/\(.+?\)/)[0]
                     ?.replace('.md', '')
+                    ?.replace('%20', ' ')
                     ?.replace(/[()]/g, '')
 
                 const file = this.getFilesByName(wikiName) || this.getFilesByName(mdName)
