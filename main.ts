@@ -40,7 +40,7 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
             const selectedRange = cm.getSelection()
             const line = selectedRange || cm.getLine(cursor.line)
 
-            const regexpMD = /(\[.+])\([\w\s,.\-%$]+\)/gi
+            const regexpMD = /(\[.+])\(.+\)/gi
             const regexpWiki = /\[\[.+]]/gi
 
             const linksWiki = line.match(regexpWiki) || []
@@ -51,18 +51,19 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
             const currentFileLink = this.app.fileManager.generateMarkdownLink(currentFile, currentFile.path)
             const lineToPaste = this.settings.template.replace('$link', currentFileLink)
 
-            const ar = [linksWiki, linksMD]
+            const ar = [linksWiki, linksMD].filter(e => e.length)
             ar.flat().forEach(async (lnk) => {
                 const wikiName = lnk
                     .replace(/(\[\[|]])/g, '')
                     .replace(/\|.+/, '')
                     .replace(/#.+/, '')
 
-                const mdName = lnk.match(/\(.+?\)/)[0]
+                const mdName = lnk.match(/\(.+?\)/)?.[0]
                     ?.replace('.md', '')
-                    ?.replace('%20', ' ')
+                    ?.replace(/%20/gi, ' ')
                     ?.replace(/[()]/g, '')
 
+                console.log(wikiName, mdName)
                 const file = this.getFilesByName(wikiName) || this.getFilesByName(mdName)
 
                 if (!file) {
