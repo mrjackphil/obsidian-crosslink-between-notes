@@ -24,7 +24,7 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
 
         this.addSettingTab(new CrosslinkSettingsTab(this.app, this));
 
-        const addBacklink = () => {
+        const addBacklink = async () => {
             const currentView = this.app.workspace.activeLeaf.view
 
             const fileName = currentView.getDisplayText()
@@ -40,8 +40,8 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
             const selectedRange = cm.getSelection()
             const line = selectedRange || cm.getLine(cursor.line)
 
-            const regexpMD = /(\[.+])\(.+\)/gi
-            const regexpWiki = /\[\[.+]]/gi
+            const regexpMD = /(\[.+?])\(.+?\)/gi
+            const regexpWiki = /\[\[.+?]]/gi
 
             const linksWiki = line.match(regexpWiki) || []
             const linksMD = line.match(regexpMD) || []
@@ -52,18 +52,16 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
             const lineToPaste = this.settings.template.replace('$link', currentFileLink)
 
             const ar = [linksWiki, linksMD].filter(e => e.length)
-            ar.flat().forEach(async (lnk) => {
+            await Promise.all(ar.flat().map(async (lnk) => {
                 const wikiName = lnk
                     .replace(/(\[\[|]])/g, '')
                     .replace(/\|.+/, '')
                     .replace(/#.+/, '')
 
-                const mdName = lnk.match(/\(.+?\)/)?.[0]
+                const mdName = decodeURI(lnk.match(/\(.+?\)/)?.[0]
                     ?.replace('.md', '')
-                    ?.replace(/%20/gi, ' ')
-                    ?.replace(/[()]/g, '')
+                    ?.replace(/[()]/g, ''))
 
-                console.log(wikiName, mdName)
                 const file = this.getFilesByName(wikiName) || this.getFilesByName(mdName)
 
                 if (!file) {
@@ -77,9 +75,9 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
                     await vault.modify(file, data + `\n` + lineToPaste)
                     succeed.push(file)
                 }
-
-                new Notice(`Add link [[${fileName}]] to ${succeed.map(e => e.basename).join(',')}`)
-            })
+                return Promise.resolve()
+            }))
+            new Notice(`Add link [[${fileName}]] to ${succeed.map(e => e.basename).join(',')}`)
         }
 
         this.addCommand({
