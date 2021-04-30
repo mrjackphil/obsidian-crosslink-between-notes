@@ -61,15 +61,37 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
 
         this.addCommand({
             id: 'add-link-to-current',
-            name: 'add links',
+            name: 'add links to the notes from the line or selection',
             callback: addBacklink,
             hotkeys: []
         })
+
+        // this.addCommand(
+        //     {
+        //         id: 'add-link-to-backlinks',
+        //         name: 'add links to the backlinks',
+        //         callback: this.addLinkToBacklinks.bind(this),
+        //         hotkeys: []
+        //     }
+        // )
     }
 
     onunload() {
         console.log('unloading plugin');
     }
+
+    // addLinkToBacklinks() {
+    //     const currentView = this.app.workspace.activeLeaf.view
+    //     if (!(currentView instanceof MarkdownView)) {
+    //         return
+    //     }
+    //
+    //     const currentFile = currentView.file
+    //
+    //     // @ts-ignore
+    //     const backlinks = this.app.metadataCache.getBacklinksForFile(currentFile)?.data
+    //     const backlinkPaths = Object.keys(backlinks)
+    // }
 
     getFilesFromLineOrSelection(view: MarkdownView): TFile[] {
         const cm = view.editor
@@ -100,8 +122,15 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
         })
     }
 
-    getFilesByName(name: string) {
+    getFilesByName(name: string | string[]) {
         const files = this.app.vault.getFiles()
+
+        if (Array.isArray(name)) {
+            return files.filter(e => name.includes(e.name)
+                || name.includes((e.path))
+                || name.includes(e.basename)
+            )[0]
+        }
 
         return files.filter(e => e.name === name
             || e.path === name
