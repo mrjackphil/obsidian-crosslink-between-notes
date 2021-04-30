@@ -1,5 +1,5 @@
 import {
-    App,
+    App, MarkdownPreviewView,
     MarkdownView,
     Notice,
     Plugin, PluginSettingTab, Setting,
@@ -24,10 +24,16 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
 
         this.addSettingTab(new CrosslinkSettingsTab(this.app, this));
 
-        const addBacklink = async () => {
+        const addBacklink = async (files?: TFile[]) => {
             const currentView = this.app.workspace.activeLeaf.view
 
             const fileName = currentView.getDisplayText()
+
+            let filesToProduce = files
+                ? files
+                : currentView instanceof MarkdownView
+                    ? this.getFilesFromLineOrSelection(currentView)
+                    : []
 
             if (!(currentView instanceof MarkdownView)) {
                 return
@@ -35,39 +41,12 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
 
             const currentFile = currentView.file
 
-            const cm = currentView.editor
-            const cursor = cm.getCursor()
-            const selectedRange = cm.getSelection()
-            const line = selectedRange || cm.getLine(cursor.line)
-
-            const regexpMD = /(\[.+?])\(.+?\)/gi
-            const regexpWiki = /\[\[.+?]]/gi
-
-            const linksWiki = line.match(regexpWiki) || []
-            const linksMD = line.match(regexpMD) || []
-
-            let succeed = [] as TFile[]
-
             const currentFileLink = this.app.fileManager.generateMarkdownLink(currentFile, currentFile.path)
             const lineToPaste = this.settings.template.replace('$link', currentFileLink)
 
-            const ar = [linksWiki, linksMD].filter(e => e.length)
-            await Promise.all(ar.flat().map(async (lnk) => {
-                const wikiName = lnk
-                    .replace(/(\[\[|]])/g, '')
-                    .replace(/\|.+/, '')
-                    .replace(/#.+/, '')
+            let succeed = [] as TFile[]
 
-                const mdName = decodeURI(lnk.match(/\(.+?\)/)?.[0]
-                    ?.replace('.md', '')
-                    ?.replace(/[()]/g, ''))
-
-                const file = this.getFilesByName(wikiName) || this.getFilesByName(mdName)
-
-                if (!file) {
-                    return
-                }
-
+            await Promise.all(filesToProduce.map(async (file) => {
                 if (file) {
                     const {vault} = this.app
 
@@ -90,6 +69,35 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
 
     onunload() {
         console.log('unloading plugin');
+    }
+
+    getFilesFromLineOrSelection(view: MarkdownView): TFile[] {
+        const cm = view.editor
+        const cursor = cm.getCursor()
+        const selectedRange = cm.getSelection()
+        const line = selectedRange || cm.getLine(cursor.line)
+
+        const regexpMD = /(\[.+?])\(.+?\)/gi
+        const regexpWiki = /\[\[.+?]]/gi
+
+        const linksWiki = line.match(regexpWiki) || []
+        const linksMD = line.match(regexpMD) || []
+
+        const ar = [linksWiki, linksMD].filter(e => e.length)
+
+        return ar.flat().map((lnk) => {
+            const wikiName = lnk
+                .replace(/(\[\[|]])/g, '')
+                .replace(/\|.+/, '')
+                .replace(/#.+/, '')
+
+            const mdName = decodeURI(lnk.match(/\(.+?\)/)?.[0]
+                ?.replace('.md', '')
+                ?.replace(/[()]/g, ''))
+
+            return this.getFilesByName(wikiName) || this.getFilesByName(mdName)
+
+        })
     }
 
     getFilesByName(name: string) {
