@@ -1,5 +1,5 @@
 import {
-    App, MarkdownPreviewView,
+    App, fuzzySearch, FuzzySuggestModal, MarkdownPreviewView,
     MarkdownView,
     Notice,
     Plugin, PluginSettingTab, Setting,
@@ -24,45 +24,20 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
 
         this.addSettingTab(new CrosslinkSettingsTab(this.app, this));
 
-        const addBacklink = async (files?: TFile[]) => {
-            const currentView = this.app.workspace.activeLeaf.view
-
-            const fileName = currentView.getDisplayText()
-
-            let filesToProduce = files
-                ? files
-                : currentView instanceof MarkdownView
-                    ? this.getFilesFromLineOrSelection(currentView)
-                    : []
-
-            if (!(currentView instanceof MarkdownView)) {
-                return
-            }
-
-            const currentFile = currentView.file
-
-            const currentFileLink = this.app.fileManager.generateMarkdownLink(currentFile, currentFile.path)
-            const lineToPaste = this.settings.template.replace('$link', currentFileLink)
-
-            let succeed = [] as TFile[]
-
-            await Promise.all(filesToProduce.map(async (file) => {
-                if (file) {
-                    const {vault} = this.app
-
-                    const data = await vault.read(file)
-                    await vault.modify(file, data + `\n` + lineToPaste)
-                    succeed.push(file)
-                }
-                return Promise.resolve()
-            }))
-            new Notice(`Add link [[${fileName}]] to ${succeed.map(e => e.basename).join(',')}`)
-        }
-
         this.addCommand({
             id: 'add-link-to-current',
             name: 'add links to the notes from the line or selection',
-            callback: addBacklink,
+            callback: this.addBacklink.bind(this),
+            hotkeys: []
+        })
+
+        this.addCommand({
+            id: 'add-link-from-quick-switcher',
+            name: 'add links to the note from the quick switcher',
+            callback: () => {
+                const modal = new FilesModal(this.app, this)
+                modal.open()
+            },
             hotkeys: []
         })
 
@@ -92,6 +67,41 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
     //     const backlinks = this.app.metadataCache.getBacklinksForFile(currentFile)?.data
     //     const backlinkPaths = Object.keys(backlinks)
     // }
+
+    addBacklink = async (files?: TFile[]) => {
+        const currentView = this.app.workspace.activeLeaf.view
+
+        const fileName = currentView.getDisplayText()
+
+        let filesToProduce = files
+            ? files
+            : currentView instanceof MarkdownView
+                ? this.getFilesFromLineOrSelection(currentView)
+                : []
+
+        if (!(currentView instanceof MarkdownView)) {
+            return
+        }
+
+        const currentFile = currentView.file
+
+        const currentFileLink = this.app.fileManager.generateMarkdownLink(currentFile, currentFile.path)
+        const lineToPaste = this.settings.template.replace('$link', currentFileLink)
+
+        let succeed = [] as TFile[]
+
+        await Promise.all(filesToProduce.map(async (file) => {
+            if (file) {
+                const {vault} = this.app
+
+                const data = await vault.read(file)
+                await vault.modify(file, data + `\n` + lineToPaste)
+                succeed.push(file)
+            }
+            return Promise.resolve()
+        }))
+        new Notice(`Add link [[${fileName}]] to ${succeed.map(e => e.basename).join(',')}`)
+    }
 
     getFilesFromLineOrSelection(view: MarkdownView): TFile[] {
         const cm = view.editor
@@ -145,6 +155,74 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
     async saveSettings() {
         await this.saveData(this.settings);
     }
+}
+
+class FilesModal extends FuzzySuggestModal<TFile> {
+    files: TFile[];
+    newNoteResult: HTMLDivElement;
+    suggestionEmpty: HTMLDivElement;
+    obsFile: any;
+    noSuggestion: boolean;
+    plugin: AddLinkToCurrentNotePlugin;
+
+    EMPTY_TEXT = 'Files not found';
+
+    constructor(app: App, plugin: AddLinkToCurrentNotePlugin) {
+        super(app);
+        this.plugin = plugin;
+        this.init();
+    }
+
+    init() {
+        this.files = this.app.vault.getMarkdownFiles();
+        this.emptyStateText = this.EMPTY_TEXT;
+        // this.setPlaceholder(PLACEHOLDER_TEXT);
+        this.setInstructions(
+            [
+                {command: '↑↓', purpose: 'to navigate'},
+                {command: '↵', purpose: 'to append link to the file'},
+                {command: 'esc', purpose: 'to dismiss'}
+            ]
+        );
+        this.initNewNoteItem();
+    }
+
+    getItems(): TFile[] {
+        return this.files;
+    }
+
+    getItemText(item: TFile): string {
+        this.noSuggestion = false;
+        return item.basename;
+    }
+
+    onNoSuggestion() {
+        this.noSuggestion = true;
+    }
+
+    onChooseItem(item: TFile, evt: MouseEvent | KeyboardEvent): void {
+        if (this.noSuggestion) {
+            // this.modalNoteCreation.create(this.inputEl.value);
+        } else {
+            this.plugin.addBacklink([item])
+        }
+    }
+
+    initNewNoteItem() {
+        this.newNoteResult = document.createElement('div');
+        this.newNoteResult.addClasses(['suggestion-item', 'is-selected']);
+        this.suggestionEmpty = document.createElement('div');
+        this.suggestionEmpty.addClass('suggestion-empty');
+        this.suggestionEmpty.innerText = this.EMPTY_TEXT;
+    }
+
+    itemInstructionMessage(resultEl: HTMLElement, message: string) {
+        const el = document.createElement('kbd');
+        el.addClass('suggestion-hotkey');
+        el.innerText = message;
+        resultEl.appendChild(el);
+    }
+
 }
 
 class CrosslinkSettingsTab extends PluginSettingTab {
