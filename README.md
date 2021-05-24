@@ -2,6 +2,7 @@
 This plugin adds a command which allows to add a link to the current note at the bottom of selected notes
 ## How to use
 - Put a cursor at a line with existed [[WikiLinks]] or select content with [[WikiLinks]].
+    - There is an option to add link to the any other file by using **add links to the current note from the quick switcher** option.
 - Open command palette (Ctrl+P) and find `Add links to current note: add links` command.
     - You can set hotkey in `Settings->Hotkey` section
 - Execute command. It will search for wikilinks and add a `[[CURRENT_OPENED_NOTE_NAME]]` at the bottom of the each note.
