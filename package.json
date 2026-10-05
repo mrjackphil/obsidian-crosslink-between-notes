@@ -1,7 +1,7 @@
 {
   "name": "mrj-crosslink-between-notes",
   "version": "0.9.7",
-  "description": "This plugin adds a command which allows to add a link to the current note at the bottom of the selected notes",
+  "description": "Add a link to the current note at the bottom of selected notes.",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
