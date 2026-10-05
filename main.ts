@@ -1,5 +1,5 @@
 import {
-    App, fuzzySearch, FuzzySuggestModal, MarkdownPreviewView,
+    App, FuzzySuggestModal,
     MarkdownView,
     Notice,
     Plugin, PluginSettingTab, Setting,
@@ -18,8 +18,6 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
     settings: PluginSettings;
 
     async onload() {
-        console.log('loading plugin');
-
         await this.loadSettings();
 
         this.addSettingTab(new CrosslinkSettingsTab(this.app, this));
@@ -27,8 +25,7 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
         this.addCommand({
             id: 'add-link-to-current',
             name: 'add links to the notes from the line or selection',
-            callback: this.addBacklink.bind(this),
-            hotkeys: []
+            callback: this.addBacklink.bind(this)
         })
 
         this.addCommand({
@@ -37,8 +34,7 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
             callback: () => {
                 const modal = new FilesModal(this.app, this)
                 modal.open()
-            },
-            hotkeys: []
+            }
         })
 
         // this.addCommand(
@@ -49,10 +45,6 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
         //         hotkeys: []
         //     }
         // )
-    }
-
-    onunload() {
-        console.log('unloading plugin');
     }
 
     // addLinkToBacklinks() {
@@ -159,9 +151,6 @@ export default class AddLinkToCurrentNotePlugin extends Plugin {
 
 class FilesModal extends FuzzySuggestModal<TFile> {
     files: TFile[];
-    newNoteResult: HTMLDivElement;
-    suggestionEmpty: HTMLDivElement;
-    obsFile: any;
     noSuggestion: boolean;
     plugin: AddLinkToCurrentNotePlugin;
 
@@ -184,7 +173,6 @@ class FilesModal extends FuzzySuggestModal<TFile> {
                 {command: 'esc', purpose: 'to dismiss'}
             ]
         );
-        this.initNewNoteItem();
     }
 
     getItems(): TFile[] {
@@ -200,27 +188,12 @@ class FilesModal extends FuzzySuggestModal<TFile> {
         this.noSuggestion = true;
     }
 
-    onChooseItem(item: TFile, evt: MouseEvent | KeyboardEvent): void {
+    onChooseItem(item: TFile, _evt: MouseEvent | KeyboardEvent): void {
         if (this.noSuggestion) {
             // this.modalNoteCreation.create(this.inputEl.value);
         } else {
-            this.plugin.addBacklink([item])
+            void this.plugin.addBacklink([item])
         }
-    }
-
-    initNewNoteItem() {
-        this.newNoteResult = document.createElement('div');
-        this.newNoteResult.addClasses(['suggestion-item', 'is-selected']);
-        this.suggestionEmpty = document.createElement('div');
-        this.suggestionEmpty.addClass('suggestion-empty');
-        this.suggestionEmpty.innerText = this.EMPTY_TEXT;
-    }
-
-    itemInstructionMessage(resultEl: HTMLElement, message: string) {
-        const el = document.createElement('kbd');
-        el.addClass('suggestion-hotkey');
-        el.innerText = message;
-        resultEl.appendChild(el);
     }
 
 }
@@ -237,8 +210,6 @@ class CrosslinkSettingsTab extends PluginSettingTab {
         let {containerEl} = this;
 
         containerEl.empty();
-
-        containerEl.createEl('h2', {text: 'Settings for "Add links to the current note" plugin'});
 
         new Setting(containerEl)
             .setName('Template')
