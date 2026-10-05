@@ -1,7 +1,7 @@
 {
   "id": "mrj-crosslink-between-notes",
   "name": "Add links to current note",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "Add a link to the current note at the bottom of selected notes.",
   "minAppVersion": "0.12.0",
   "author": "MrJackphil",

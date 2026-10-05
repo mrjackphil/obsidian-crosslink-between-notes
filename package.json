@@ -1,6 +1,6 @@
 {
   "name": "mrj-crosslink-between-notes",
-  "version": "0.9.7",
+  "version": "0.1.0",
   "description": "Add a link to the current note at the bottom of selected notes.",
   "main": "main.js",
   "scripts": {
